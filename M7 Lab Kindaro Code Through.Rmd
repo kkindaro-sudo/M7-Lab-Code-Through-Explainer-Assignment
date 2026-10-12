@@ -1,0 +1,166 @@
+---
+title: "Exploring and Visualizing the Iris Dataset in R"
+author: "Karen Kindaro"
+date: "October 10, 2026"
+output:
+  html_document:
+    theme: flatly
+    highlight: tango
+    toc: true
+    toc_float: true
+    number_sections: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  message = FALSE,
+  warning = FALSE,
+  fig.width = 8,
+  fig.height = 5
+)
+
+library(dplyr)
+library(ggplot2)
+library(knitr)
+```
+
+# Introduction
+
+This code-through explains how to explore and change a dataset in R. I use the
+`iris` dataset because it is already included in R, so no file needs to be
+downloaded. The dataset contains measurements for 150 flowers from three iris
+species: setosa, versicolor, and virginica.
+
+By the end of this tutorial, you will know how to:
+
+- view a dataset;
+- select and filter observations;
+- create a new variable;
+- summarize information by group; and
+- create a graph with `ggplot2`.
+
+# Load and Preview the Data
+
+First, I copy the built-in dataset into an object called `flowers`. The
+`head()` function prints the first six rows. This is a quick way to understand
+what the data looks like.
+
+```{r load-data}
+flowers <- iris
+head(flowers)
+```
+
+Each row represents one flower. The first four columns contain measurements in
+centimeters, and `Species` gives the flower's species.
+
+# Check the Dataset Structure
+
+The `glimpse()` function shows the number of rows and columns, the type of each
+variable, and a few values. The `count()` function shows how many flowers belong
+to each species.
+
+```{r inspect-data}
+glimpse(flowers)
+
+flowers %>%
+  count(Species)
+```
+
+The dataset has 150 rows and 5 columns. It has 50 flowers from each species, so
+the three groups are the same size.
+
+# Select and Filter Rows
+
+Sometimes we only need a small part of a dataset. In the next step, I use
+`filter()` to keep only setosa flowers. I use `select()` to keep three useful
+columns, and `slice_head()` to print only the first six rows.
+
+```{r filter-data}
+setosa_sample <- flowers %>%
+  filter(Species == "setosa") %>%
+  select(Sepal.Length, Petal.Length, Species) %>%
+  slice_head(n = 6)
+
+setosa_sample
+```
+
+The new object is smaller than the original dataset. It contains only setosa
+flowers and only the columns selected in the code.
+
+# Create a New Variable
+
+The `mutate()` function creates or changes a variable. Here, I create
+`Petal.Ratio` by dividing petal length by petal width. The `round()` function
+makes the result easier to read.
+
+```{r mutate-data}
+flowers_changed <- flowers %>%
+  mutate(Petal.Ratio = round(Petal.Length / Petal.Width, 2))
+
+flowers_changed %>%
+  select(Petal.Length, Petal.Width, Petal.Ratio, Species) %>%
+  slice_head(n = 6)
+```
+
+The original dataset had five columns. The changed dataset has a sixth column,
+`Petal.Ratio`, while the original measurements remain unchanged.
+
+# Summarize the Species
+
+The `group_by()` and `summarise()` functions work together. First, the flowers
+are placed into species groups. Then R calculates the number of flowers and the
+average sepal and petal lengths for every group.
+
+```{r summary-table}
+species_summary <- flowers %>%
+  group_by(Species) %>%
+  summarise(
+    Number_of_Flowers = n(),
+    Average_Sepal_Length = round(mean(Sepal.Length), 2),
+    Average_Petal_Length = round(mean(Petal.Length), 2)
+  )
+
+kable(
+  species_summary,
+  caption = "Average Flower Measurements by Species",
+  align = "c"
+)
+```
+
+The table shows that setosa has the shortest average petals, while virginica
+has the longest average petals.
+
+# Make a Graph
+
+A graph can make group differences easier to see. The following scatterplot
+compares sepal length with petal length. Color represents species, and
+`geom_smooth()` adds one trend line for each group.
+
+```{r scatterplot, fig.cap="Sepal Length and Petal Length by Iris Species"}
+ggplot(flowers, aes(x = Sepal.Length, y = Petal.Length, color = Species)) +
+  geom_point(size = 2.5, alpha = 0.8) +
+  geom_smooth(method = "lm", se = FALSE, linewidth = 0.8) +
+  labs(
+    title = "Iris Flower Measurements",
+    subtitle = "Relationship between sepal length and petal length",
+    x = "Sepal Length (cm)",
+    y = "Petal Length (cm)",
+    color = "Species"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(legend.position = "bottom")
+```
+
+The colors form three visible groups. Setosa flowers have much shorter petals.
+Virginica flowers generally have the longest petals and sepals. The upward
+trend lines also show that flowers with longer sepals usually have longer
+petals.
+
+# Conclusion
+
+In this tutorial, I used a built-in dataset to demonstrate a simple data
+analysis process. I previewed the data, checked its structure, filtered rows,
+selected columns, created a new variable, calculated group summaries, and made
+a graph. These same steps can be used with many other datasets in R.
+
